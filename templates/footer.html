@@ -1,0 +1,17 @@
+    <footer class="footer">
+        <div class="footer-content">
+            <span id="datetime"></span>
+            <span id="status_item">&nbsp;</span>
+            <span>User ID: {{ context.uid }}</span>
+        </div>
+    </footer>
+
+    <script>
+        function updateDateTime() {
+            var now = new Date();
+            var datetime = now.toLocaleString();
+            document.getElementById('datetime').innerText = datetime;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+    </script>

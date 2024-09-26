@@ -1,0 +1,44 @@
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="brand">{{ context.appname }}</a>
+            <button class="navbar-toggler" onclick="toggleMenu()">☰</button>
+            <div class="navbar-menu" id="navbarMenu">
+                <a href="/" class="nav-item">Home</a>
+                <a href="/meters" class="nav-item">Meters</a>
+                <div class="user-menu">
+                    {% if context.uid > '' %}
+                        <button class="user-menu-toggler" onclick="toggleUserMenu()">User Menu ▼</button>
+                        <div class="user-menu-content" id="userMenuContent">
+                            <a href="/profile" class="nav-item">Profile</a>
+                            <a href="/logout" class="nav-item">Logout</a>
+                        </div>
+                    {% else %}
+                        <a href="/login" class="nav-item">Login</a>
+                    {% endif %}
+                </div>
+                      <a href="/about" class="nav-item">About</a>
+                <a href="/contact" class="nav-item">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        function toggleMenu() {
+            var menu = document.getElementById('navbarMenu');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        }
+
+        function toggleUserMenu() {
+            var userMenu = document.getElementById('userMenuContent');
+            if (userMenu.style.display === 'block') {
+                userMenu.style.display = 'none';
+            } else {
+                userMenu.style.display = 'block';
+            }
+        }
+
+    </script>

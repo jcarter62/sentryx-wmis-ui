@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ context.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        #meter_list {
+            width: 100%;
+            margin: 0 auto; /* center the table */
+        }
+
+        #meter_list th {
+            text-align: left;
+        }
+
+        #meter_list tr:nth-child(even) {
+            background-color: #aaaaaa;
+        }
+
+        #meter_list tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        #table_header td:last-child {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .hdrbar {
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        .hdrbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+        }
+
+        .hdrbrand {
+            color: black;
+            text-decoration: none;
+            font-size: 24px;
+        }
+
+        .hdrbar-menu {
+            display: flex;
+            flex-direction: row;
+        }
+
+        #change_target_date {
+            border: 1px solid #000; /* 1px thin border with black color */
+            padding: 10px; /* Optional: Add some padding inside the form */
+        }
+    </style>
+
+    <script>
+        let uid = '{{ context.uid }}';
+
+        function post_reading(meter_id, readingdate, reading) {
+
+            let url = '/meters/post-reading/' + meter_id + '/' + readingdate + '/' + reading + '/' + uid;
+            let itemid = document.getElementById('action_' + meter_id);
+            itemid.innerHTML = 'Posting...';
+            itemid.enabled = false;
+            fetch(url, {"method": "POST"})
+                .then(response => response.json())
+                .then(data => {
+
+                    if (data.data.toLowerCase() === 'ok') {
+                        itemid.innerHTML = 'Posted Successfully';
+                    } else {
+                        let msgid = document.getElementById('post_msg_' + meter_id);
+                        msgid.innerHTML = 'Error posting reading';
+                    }
+                });
+        }
+
+        function process_readings() {
+            let url = '/meters/process-readings';
+            let btnid = document.getElementById('process_readings');
+            btnid.innerText = 'Processing...';
+            btnid.disabled = true;
+            fetch(url, {"method": "POST"})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.data.toLowerCase() === 'ok') {
+                        btnid.innerText = 'Readings Processed';
+
+                    } else {
+                        btnid.innerText = 'Error Processing Readings';
+                    }
+                    btnid.disabled = false;
+                });
+        }
+
+        let _mtrs_ = [];
+
+        function update_all() {
+            let itm = {};
+            let maxi = _mtrs_.length;
+            let processed_num = 0;
+            for (let i = 0; i < maxi; i++) {
+                itm = _mtrs_[i];
+                if (itm.rec_action > '') {
+                    post_reading(itm.meter_id, itm.readingdate, itm.reading);
+                    processed_num++;
+                }
+            }
+        }
+
+        function update_update_all_button() {
+            let btnid = document.getElementById('update_all');
+            let item_count = 0;
+            for (let i = 0; i < _mtrs_.length; i++) {
+                if (_mtrs_[i].rec_action > '') {
+                    item_count++;
+                }
+            }
+            if (item_count === 0) {
+                btnid.disabled = true;
+                btnid.innerText = 'All Updated';
+            } else {
+                btnid.disabled = false;
+                btnid.innerText = 'Update All (' + item_count + ')';
+            }
+        }
+
+
+        function display_records_that_require_update() {
+
+            function addTxt(existing, newtxt) {
+                if (existing > '') {
+                    return existing + ', ' + newtxt;
+                } else {
+                    return newtxt;
+                }
+            }
+
+            let n_updates = 0;
+            let n_posting = 0;
+            let n_posted = 0;
+            for (let i = 0; i < _mtrs_.length; i++) {
+                let txt = document.getElementById('action_' + _mtrs_[i].meter_id);
+                if (txt) {
+                    if (txt.innerText.trim().toLowerCase() === 'posting...') {
+                        n_posting++;
+                    }
+                    if (txt.innerText.trim().toLowerCase() === 'update') {
+                        n_updates++;
+                    }
+                    if (txt.innerText.trim().toLowerCase() === 'posted successfully') {
+                        n_posted++;
+                    }
+                }
+            }
+            let stat_itm = document.getElementById('status_item');
+            let status_text = '';
+            if (n_updates > 0) {
+                status_text = addTxt(status_text, 'Update Needed: ' + n_updates);
+            }
+            if (n_posting > 0) {
+                status_text = addTxt(status_text, ' Posting: ' + n_posting);
+            }
+            if (n_posted > 0) {
+                status_text = addTxt(status_text, ' Posted: ' + n_posted);
+                status_text = addTxt(status_text, ' (Process Readings to clear)');
+            }
+            stat_itm.innerText = status_text.trim();
+        }
+
+        // execute display_records_that_require_update() every 5 seconds
+        setInterval(display_records_that_require_update, 1000);
+
+    </script>
+
+
+</head>
+<body>
+{% include 'menu.html' %}
+
+<nav class="hdrbar">
+    <div class="hdrbar-container">
+        <div class="hdrbrand">{{ context.title }}</div>
+        <div class="hdrbar-menu">
+            <form id="change_target_date" method="post">
+                <span>
+                    <label>Target Date:</label>
+                    <input type="date" id="targetdate" name="targetdate" value="{{ context.targetdate }}">
+                    <input type="submit">
+                </span>
+            </form>
+            <div>&nbsp;&nbsp;</div>
+            <button id="update_all" onclick="update_all()">Update All</button>
+            <button id="process_readings" onclick="process_readings()">Process Readings</button>
+        </div>
+    </div>
+</nav>
+
+<p>
+<table id="meter_list">
+    <tr>
+        <th>Meter ID</th>
+        <th>Reading Date</th>
+        <th>Reading</th>
+        <th>Status</th>
+        <th>Days Old</th>
+        <th>Action</th>
+    </tr>
+    {% for m in context.data %}
+        <tr>
+            <td>{{ m.meter_id }}</td>
+            <td>{{ m.readingdate }}</td>
+            <td>{{ m.reading }}</td>
+            <td>{{ m.readingstatus }}</td>
+            <td>{{ m.daysold }}</td>
+            {% if m.rec_action > '' %}
+                <td id="action_{{ m.meter_id }}">
+                    <button onclick="post_reading('{{ m.meter_id }}','{{ m.readingdate }}', {{ m.reading }});">
+                        {{ m.rec_action }}
+                    </button>
+                    <label id="post_msg_{{ m.meter_id }}"></label>
+                </td>
+
+            {% else %}
+                <td>&nbsp;</td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+</table>
+</p>
+{% include 'footer.html' %}
+</body>
+
+<script>
+
+    let item_rec = {};
+    {% for m in context.data %}
+        item_rec = {
+            "meter_id": "{{ m.meter_id }}",
+            "readingdate": "{{ m.readingdate }}",
+            "reading": "{{ m.reading }}",
+            "rec_action": "{{ m.rec_action }}"
+        };
+        _mtrs_.push(item_rec);
+    {% endfor %}
+    item_rec = null;
+
+    update_update_all_button();
+</script>
+</html>
