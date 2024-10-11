@@ -69,10 +69,10 @@
             fetch(url, {"method": "POST"})
                 .then(response => response.json())
                 .then(data => {
-
-                    if (data.data.toLowerCase() === 'ok') {
-                        itemid.innerHTML = 'Posted Successfully';
-                    } else {
+                    let result = data.data.toLowerCase();
+                    if ( (result === 'ok') || (result === 'duplicate') ) {
+                        itemid.innerHTML = 'Posted - ' + result;
+                    }else {
                         let msgid = document.getElementById('post_msg_' + meter_id);
                         msgid.innerHTML = 'Error posting reading';
                     }
@@ -146,13 +146,17 @@
             for (let i = 0; i < _mtrs_.length; i++) {
                 let txt = document.getElementById('action_' + _mtrs_[i].meter_id);
                 if (txt) {
-                    if (txt.innerText.trim().toLowerCase() === 'posting...') {
+                    // get left 5 characters of the button text
+
+                    btntxt = txt.innerText.trim().toLowerCase().substring(0, 5);
+
+                    if (btntxt === 'posti') { // posting ...
                         n_posting++;
                     }
-                    if (txt.innerText.trim().toLowerCase() === 'update') {
+                    if (btntxt === 'updat') { // update needed
                         n_updates++;
                     }
-                    if (txt.innerText.trim().toLowerCase() === 'posted successfully') {
+                    if (btntxt === 'poste') { // posted or duplicate
                         n_posted++;
                     }
                 }

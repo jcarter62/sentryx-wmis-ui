@@ -85,16 +85,22 @@ def lwr(meter_id:str):
 @meters_bp.route('/post-reading/<meter_id>/<reading_date>/<reading>/<uid>', methods=['POST'])
 def post_reading(meter_id:str, reading_date:str, reading:str, uid:str):
     data = []
+    apicode = 500
     url = os.getenv('DATA_API', '') + f'/api/post-reading/{meter_id}/{reading_date}/{reading}/{uid}'
 
     api_result = requests.post(url)
     code = api_result.status_code
     if code == 200:
         data = api_result.json()
+        apicode = data[1]
+    elif code == 208:
+        data = api_result.json()
+        apicode = data[1]
     else:
         data = [{'error': 'Error loading'}]
+        apicode = 500
 
-    return data[0],code
+    return data[0],apicode
 
 @meters_bp.route('/process-readings', methods=['POST'])
 def process_readings():
